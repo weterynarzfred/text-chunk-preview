@@ -118,11 +118,11 @@ function displayExif(exif) {
 
   let hasData = false;
   if (url.endsWith(".jpg") || url.endsWith(".jpeg")) {
-    const exif = await extractExifFromJpeg(url);
+    const exif = await extractExifFromJpeg(document.location.href);
     hasData = Object.values(exif).length > 0;
     if (hasData) displayExif(exif);
   } else if (url.endsWith(".png")) {
-    const chunks = await extractTEXTChunks(url);
+    const chunks = await extractTEXTChunks(document.location.href);
     hasData = Object.values(chunks).length > 0;
     if (hasData) displayChunks(chunks);
   }
