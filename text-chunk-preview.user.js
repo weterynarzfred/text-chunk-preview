@@ -3,7 +3,7 @@
 // @include     /.*\.(png|jpe?g)(\?.*)?$/
 // @grant       none
 // @require     https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js
-// @version     1.1
+// @version     1.2
 // @namespace   text-chunk-preview
 // @author      AntlersAnon
 // ==/UserScript==
