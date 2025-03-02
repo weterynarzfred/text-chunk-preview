@@ -1,14 +1,27 @@
 // ==UserScript==
 // @name        tEXt chunk preview
-// @include     /.*\.png(\?.*)?$/
+// @include     /.*\.(png|jpe?g)(\?.*)?$/
 // @grant       none
-// @version     1.0
+// @require     https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js
+// @version     1.1
 // @namespace   text-chunk-preview
 // @author      AntlersAnon
 // ==/UserScript==
 
-async function extractTEXTChunks(pngUrl) {
-  const response = await fetch(pngUrl);
+async function extractExifFromJpeg(imgUrl) {
+  const response = await fetch(imgUrl);
+  const blob = await response.blob();
+  const arrayBuffer = await blob.arrayBuffer();
+  const exif = EXIF.readFromBinaryFile(arrayBuffer);
+
+  if (exif && exif.UserComment)
+    exif.UserComment = String.fromCharCode(...exif.UserComment.slice(8)).trim();
+
+  return exif ? exif : {};
+}
+
+async function extractTEXTChunks(imgUrl) {
+  const response = await fetch(imgUrl);
   const arrayBuffer = await response.arrayBuffer();
   const dataView = new DataView(arrayBuffer);
 
@@ -42,12 +55,85 @@ async function extractTEXTChunks(pngUrl) {
 }
 
 function displayChunks(chunks) {
-  console.log(chunks);
-  if (Object.values(chunks).length === 0) return;
+  let isTextChunkActive = false;
+
+  const button = document.createElement('div');
+  button.id = 'png-text-button';
+  button.classList.add('metadata-preview-button');
+  button.textContent = "tEXt";
+  button.addEventListener('click', () => {
+    if (isTextChunkActive)
+      container.classList.remove('active');
+    else
+      container.classList.add('active');
+    isTextChunkActive = !isTextChunkActive;
+  });
+
+  const container = document.createElement('div');
+  container.id = 'png-text-chunks';
+  for (chunkKey in chunks) {
+    const chunkElement = document.createElement('div');
+    chunkElement.classList.add('png-text-chunk');
+    chunkElement.innerHTML = `<span class="png-text-chunk-key">${chunkKey}:</span> <span class="png-text-chunk-value">${chunks[chunkKey]}</span>`;
+    container.appendChild(chunkElement);
+  }
+
+  document.getElementById('metadata-preview-buttons').appendChild(button);
+  document.body.appendChild(container);
+}
+
+function displayExif(exif) {
+  console.log(exif);
+
+  let isExifActive = false;
+
+  const button = document.createElement('div');
+  button.id = 'exif-button';
+  button.classList.add('metadata-preview-button');
+  button.textContent = "EXIF";
+  button.addEventListener('click', () => {
+    if (isExifActive)
+      container.classList.remove('active');
+    else
+      container.classList.add('active');
+    isExifActive = !isExifActive;
+  });
+
+  const container = document.createElement('div');
+  container.id = 'png-text-chunks';
+  for (exifKey in exif) {
+    const chunkElement = document.createElement('div');
+    chunkElement.classList.add('png-text-chunk');
+    chunkElement.innerHTML = `<span class="png-text-chunk-key">${exifKey}:</span> <span class="png-text-chunk-value">${exif[exifKey]}</span>`;
+    container.appendChild(chunkElement);
+  }
+
+  document.getElementById('metadata-preview-buttons').appendChild(button);
+  document.body.appendChild(container);
+}
+
+(async () => {
+  const url = document.location.href.toLowerCase();
+  const buttons = document.createElement('div');
+  buttons.id = 'metadata-preview-buttons';
+  document.body.appendChild(buttons);
+
+  let hasData = false;
+  if (url.endsWith(".jpg") || url.endsWith(".jpeg")) {
+    const exif = await extractExifFromJpeg(url);
+    hasData = Object.values(exif).length > 0;
+    if (hasData) displayExif(exif);
+  } else if (url.endsWith(".png")) {
+    const chunks = await extractTEXTChunks(url);
+    hasData = Object.values(chunks).length > 0;
+    if (hasData) displayChunks(chunks);
+  }
+
+  if (!hasData) return;
 
   const style = document.createElement('style');
   style.textContent = `
-#png-text-button {
+#metadata-preview-buttons {
   position: fixed;
   z-index: 1;
   top: .5rem;
@@ -55,6 +141,9 @@ function displayChunks(chunks) {
   font-family: monospace;
   font-weight: 700;
   font-size: .8rem;
+}
+
+.metadata-preview-button {
   padding: .25em .5em;
   background-color: #111d;
   color: #fff;
@@ -63,7 +152,7 @@ function displayChunks(chunks) {
   cursor: pointer;
 }
 
-#png-text-button:hover {
+.metadata-preview-button:hover {
   background-color: #333;
 }
 
@@ -79,6 +168,7 @@ function displayChunks(chunks) {
   max-width: 80%;
   height: 100%;
   overflow: scroll;
+  white-space: pre-wrap;
 
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -94,41 +184,12 @@ function displayChunks(chunks) {
 
 .png-text-chunk {
   padding: .5rem;
+  border-bottom: 1px solid #555;
+}
+
+.png-text-chunk:last-child {
+  border: none;
 }
 `;
-
-  let isTextChunkActive = false;
-
-  const button = document.createElement('div');
-  button.id = 'png-text-button';
-  button.textContent = "tEXt";
-  button.addEventListener('click', () => {
-    if (isTextChunkActive) {
-      container.classList.remove('active');
-    } else {
-      container.classList.add('active');
-    }
-    isTextChunkActive = !isTextChunkActive;
-  });
-
-  const container = document.createElement('div');
-  container.id = 'png-text-chunks';
-  for (chunkKey in chunks) {
-    console.log(chunkKey);
-    const chunkElement = document.createElement('div');
-    chunkElement.classList.add('png-text-chunk');
-    chunkElement.innerHTML = `
-<span class="png-text-chunk-key">${chunkKey}:</span> <span class="png-text-chunk-value">${chunks[chunkKey]}</span>
-`;
-    container.appendChild(chunkElement);
-  }
-
   document.body.appendChild(style);
-  document.body.appendChild(button);
-  document.body.appendChild(container);
-}
-
-(async () => {
-  const chunks = await extractTEXTChunks(document.location);
-  displayChunks(chunks);
 })();
