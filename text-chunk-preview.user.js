@@ -83,8 +83,6 @@ function displayChunks(chunks) {
 }
 
 function displayExif(exif) {
-  console.log(exif);
-
   let isExifActive = false;
 
   const button = document.createElement('div');
@@ -113,7 +111,7 @@ function displayExif(exif) {
 }
 
 (async () => {
-  const url = document.location.href.toLowerCase();
+  const url = document.location.href.split('?')[0].toLowerCase();
   const buttons = document.createElement('div');
   buttons.id = 'metadata-preview-buttons';
   document.body.appendChild(buttons);
@@ -165,7 +163,7 @@ function displayExif(exif) {
   background-color: #111d;
   color: #fff;
   width: 60rem;
-  max-width: 80%;
+  max-width: 100%;
   height: 100%;
   overflow: scroll;
   white-space: pre-wrap;
