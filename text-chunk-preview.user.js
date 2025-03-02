@@ -3,7 +3,7 @@
 // @include     /.*\.(png|jpe?g)(\?.*)?$/
 // @grant       none
 // @require     https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js
-// @version     1.2
+// @version     1.3
 // @namespace   text-chunk-preview
 // @author      AntlersAnon
 // ==/UserScript==
@@ -54,6 +54,15 @@ async function extractTEXTChunks(imgUrl) {
   return textChunks;
 }
 
+function escapeHTML(htmlString) {
+  return htmlString.toString()
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');;
+}
+
 function displayChunks(chunks) {
   let isTextChunkActive = false;
 
@@ -74,7 +83,7 @@ function displayChunks(chunks) {
   for (chunkKey in chunks) {
     const chunkElement = document.createElement('div');
     chunkElement.classList.add('png-text-chunk');
-    chunkElement.innerHTML = `<span class="png-text-chunk-key">${chunkKey}:</span> <span class="png-text-chunk-value">${chunks[chunkKey]}</span>`;
+    chunkElement.innerHTML = `<span class="png-text-chunk-key">${chunkKey}:</span> <span class="png-text-chunk-value">${escapeHTML(chunks[chunkKey])}</span>`;
     container.appendChild(chunkElement);
   }
 
@@ -102,7 +111,7 @@ function displayExif(exif) {
   for (exifKey in exif) {
     const chunkElement = document.createElement('div');
     chunkElement.classList.add('png-text-chunk');
-    chunkElement.innerHTML = `<span class="png-text-chunk-key">${exifKey}:</span> <span class="png-text-chunk-value">${exif[exifKey]}</span>`;
+    chunkElement.innerHTML = `<span class="png-text-chunk-key">${exifKey}:</span> <span class="png-text-chunk-value">${escapeHTML(exif[exifKey])}</span>`;
     container.appendChild(chunkElement);
   }
 
