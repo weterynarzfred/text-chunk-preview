@@ -1,8 +1,9 @@
 // ==UserScript==
-// @name        Display tEXt chunks
+// @name        tEXt chunk preview
 // @include     /.*\.png(\?.*)?$/
 // @grant       none
 // @version     1.0
+// @namespace   text-chunk-preview
 // @author      AntlersAnon
 // ==/UserScript==
 
