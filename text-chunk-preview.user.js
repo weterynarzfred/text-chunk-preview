@@ -3,7 +3,7 @@
 // @include     /.*\.(png|jpe?g)(\?.*)?$/
 // @grant       none
 // @require     https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js
-// @version     1.3
+// @version     1.4
 // @namespace   text-chunk-preview
 // @author      AntlersAnon
 // ==/UserScript==
@@ -60,7 +60,50 @@ function escapeHTML(htmlString) {
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');;
+    .replaceAll("'", '&#039;');
+}
+
+function formatPrompt(string) {
+  console.log(string);
+  const splitString = string.split(/\n(Negative prompt|Steps): /, 5);
+
+  if (splitString.length !== 5) throw ("unknown prompt format");
+
+  const data = {
+    "prompt": splitString[0],
+    "negative prompt": splitString[2],
+  };
+  splitString[4] = "Steps: " + splitString[4];
+  console.log(splitString[4]);
+  splitString[4].match(/[a-zA-Z0-9 ]+: (\{.*?\}|[^\{\}:,]+)(, |$)/g).forEach(e => {
+    const split = e.split(/: (.+)/, 2);
+    if (split.length !== 2) return;
+    data[split[0]] = split[1].replace(/, $/, "");
+    if (data[split[0]].startsWith('{')) {
+      try {
+        const formatted = JSON.stringify(JSON.parse(data[split[0]]), null, 2);
+        data[split[0]] = formatted;
+      } catch (e) { }
+    }
+  });
+
+  return "<table>" + Object.entries(data).map(([key, value]) => `<tr class="prompt-part"><td><b>${key}</b></td><td><code>${escapeHTML(value)}</code></td></tr>`).join("") + "</table>" + `<span class="png-text-chunk-key">raw parameters: </span>` + escapeHTML(string);
+}
+
+function formatString(string) {
+  try {
+    const data = JSON.parse(string);
+    return "<code>" + escapeHTML(JSON.stringify(data, null, 2)) + "</code>";
+  } catch (e) { }
+
+  if (string.includes("Negative prompt")) {
+    try {
+      const data = formatPrompt(string);
+      return data;
+    } catch (e) { console.error(e); }
+  }
+
+  return (escapeHTML(string));
 }
 
 function displayChunks(chunks) {
@@ -83,7 +126,7 @@ function displayChunks(chunks) {
   for (chunkKey in chunks) {
     const chunkElement = document.createElement('div');
     chunkElement.classList.add('png-text-chunk');
-    chunkElement.innerHTML = `<span class="png-text-chunk-key">${chunkKey}:</span> <span class="png-text-chunk-value">${escapeHTML(chunks[chunkKey])}</span>`;
+    chunkElement.innerHTML = `<span class="png-text-chunk-key">${chunkKey}:</span> <span class="png-text-chunk-value">${formatString(chunks[chunkKey])}</span>`;
     container.appendChild(chunkElement);
   }
 
@@ -111,7 +154,7 @@ function displayExif(exif) {
   for (exifKey in exif) {
     const chunkElement = document.createElement('div');
     chunkElement.classList.add('png-text-chunk');
-    chunkElement.innerHTML = `<span class="png-text-chunk-key">${exifKey}:</span> <span class="png-text-chunk-value">${escapeHTML(exif[exifKey])}</span>`;
+    chunkElement.innerHTML = `<span class="png-text-chunk-key">${exifKey}:</span> <span class="png-text-chunk-value">${formatString(exif[exifKey])}</span>`;
     container.appendChild(chunkElement);
   }
 
@@ -175,10 +218,13 @@ function displayExif(exif) {
   max-width: 100%;
   height: 100%;
   overflow: scroll;
-  white-space: pre-wrap;
-
+  
   -ms-overflow-style: none;
   scrollbar-width: none;
+  }
+  
+#png-text-chunks code {
+  white-space: pre-wrap;
 }
 
 #png-text-chunks::-webkit-scrollbar {
@@ -196,6 +242,30 @@ function displayExif(exif) {
 
 .png-text-chunk:last-child {
   border: none;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+.prompt-part td {
+  border-top: 1px solid #333;
+  padding: .3em;
+}
+
+.prompt-part:first-child td {
+  border-top: none;
+}
+
+.prompt-part td:first-child {
+  white-space: pre;
+  text-align: center;
+  background-color: #222;
+}
+
+.prompt-part b {
+  padding: 0 .5em .1em .5em;
+  border-radius: 5px;
 }
 `;
   document.body.appendChild(style);
