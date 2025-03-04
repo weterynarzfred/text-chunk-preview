@@ -3,7 +3,7 @@
 // @include     /.*\.(png|jpe?g)(\?.*)?$/
 // @grant       none
 // @require     https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js
-// @version     1.4
+// @version     1.4.1
 // @namespace   text-chunk-preview
 // @author      AntlersAnon
 // ==/UserScript==
@@ -64,7 +64,6 @@ function escapeHTML(htmlString) {
 }
 
 function formatPrompt(string) {
-  console.log(string);
   const splitString = string.split(/\n(Negative prompt|Steps): /, 5);
 
   if (splitString.length !== 5) throw ("unknown prompt format");
@@ -74,7 +73,6 @@ function formatPrompt(string) {
     "negative prompt": splitString[2],
   };
   splitString[4] = "Steps: " + splitString[4];
-  console.log(splitString[4]);
   splitString[4].match(/[a-zA-Z0-9 ]+: (\{.*?\}|[^\{\}:,]+)(, |$)/g).forEach(e => {
     const split = e.split(/: (.+)/, 2);
     if (split.length !== 2) return;
@@ -91,6 +89,7 @@ function formatPrompt(string) {
 }
 
 function formatString(string) {
+  if (typeof string !== "string") return string;
   try {
     const data = JSON.parse(string);
     return "<code>" + escapeHTML(JSON.stringify(data, null, 2)) + "</code>";
@@ -218,11 +217,11 @@ function displayExif(exif) {
   max-width: 100%;
   height: 100%;
   overflow: scroll;
-  
+
   -ms-overflow-style: none;
   scrollbar-width: none;
   }
-  
+
 #png-text-chunks code {
   white-space: pre-wrap;
 }
