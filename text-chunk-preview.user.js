@@ -2,8 +2,9 @@
 // @name        tEXt chunk preview
 // @include     /.*\.(png|jpe?g)(\?.*)?$/
 // @grant       none
-// @require     https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js
-// @version     1.4.1
+// @require     https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js
+// @require     https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js
+// @version     1.5
 // @namespace   text-chunk-preview
 // @author      AntlersAnon
 // ==/UserScript==
@@ -13,6 +14,9 @@ async function extractExifFromJpeg(imgUrl) {
   const blob = await response.blob();
   const arrayBuffer = await blob.arrayBuffer();
   const exif = EXIF.readFromBinaryFile(arrayBuffer);
+
+  delete exif.MakerNote;
+  delete exif.thumbnail;
 
   if (exif && exif.UserComment)
     exif.UserComment = String.fromCharCode(...exif.UserComment.slice(8)).trim();
@@ -52,6 +56,111 @@ async function extractTEXTChunks(imgUrl) {
   }
 
   return textChunks;
+}
+
+// adapted from https://github.com/albertlast/SD-Prompts-Checker
+function readBytes(alphaData, width, height, maxWidth, maxHeight) {
+  let byte = 0;
+  for (let i = 0; i < 8; i++) {
+    byte <<= 1;
+    byte |= alphaData[height][width];
+    height++;
+    if (height === maxHeight) {
+      width++;
+      height = 0;
+    }
+  }
+  return {
+    byte,
+    width,
+    height,
+  };
+}
+
+// adapted from https://github.com/albertlast/SD-Prompts-Checker
+async function novelAiRead(imgUrl) {
+  const response = await fetch(imgUrl);
+  const arrayBuffer = await response.arrayBuffer();
+  const byteArray = new Uint8Array(arrayBuffer);
+  const contentType = response.headers.get("Content-Type");
+
+  let text = "",
+    textCompressionm = "";
+  let aplhaData = {};
+  let img = new Blob([byteArray], { type: contentType });
+  let bitmap = await createImageBitmap(img);
+  let canvas = document.createElement("canvas");
+  let ctx = canvas.getContext("2d");
+  let maxWidth = -1;
+  let maxHeight = -1;
+  maxWidth = bitmap.width;
+  maxHeight = bitmap.height;
+  canvas.width = maxWidth;
+  canvas.height = maxHeight;
+  ctx.drawImage(bitmap, 0, 0);
+
+  let imgData = ctx.getImageData(0, 0, bitmap.width, bitmap.height).data;
+  let rows = 0;
+  let cols = 0;
+
+  for (let x = 3; x < imgData.length; x += 4) {
+    if (cols === 0) aplhaData[rows] = {};
+    aplhaData[rows][cols] = imgData[x] & 1;
+    cols++;
+    if (cols === maxWidth) {
+      rows++;
+      cols = 0;
+    }
+  }
+
+  //magic number check
+  const magic = "stealth_pngcomp";
+  let readWidth = 0;
+  let readHeight = 0;
+  let readObj;
+  let pngByte = new Uint8Array();
+  for (let y = 0; y < magic.length; y++) {
+    const tempByte = pngByte;
+    readObj = readBytes(aplhaData, readWidth, readHeight, maxWidth, maxHeight);
+    readWidth = readObj.width;
+    readHeight = readObj.height;
+    pngByte = new Uint8Array(pngByte.length + 1);
+    pngByte.set(tempByte);
+    pngByte.set([readObj.byte], tempByte.length);
+  }
+
+  const magicCode = String.fromCharCode(...pngByte);
+  pngByte = new Uint8Array();
+
+  if (magic !== magicCode) return;
+
+  //get the size of data
+  for (let y = 0; y < 4; y++) {
+    const tempByte = pngByte;
+    readObj = readBytes(aplhaData, readWidth, readHeight, maxWidth, maxHeight);
+    readWidth = readObj.width;
+    readHeight = readObj.height;
+    pngByte = new Uint8Array(pngByte.length + 1);
+    pngByte.set(tempByte);
+    pngByte.set([readObj.byte], tempByte.length);
+  }
+
+  const zipLong = new DataView(pngByte.buffer).getInt32(0, false) / 8;
+  pngByte = new Uint8Array();
+  //read data
+  for (let y = 0; y < zipLong; y++) {
+    const tempByte = pngByte;
+    readObj = readBytes(aplhaData, readWidth, readHeight, maxWidth, maxHeight);
+    readWidth = readObj.width;
+    readHeight = readObj.height;
+    pngByte = new Uint8Array(pngByte.length + 1);
+    pngByte.set(tempByte);
+    pngByte.set([readObj.byte], tempByte.length);
+  }
+
+  let promp = pako.ungzip(pngByte);
+  const utf8decoder = new TextDecoder();
+  return { "alpha layer": utf8decoder.decode(promp) };
 }
 
 function escapeHTML(htmlString) {
@@ -105,56 +214,28 @@ function formatString(string) {
   return (escapeHTML(string));
 }
 
-function displayChunks(chunks) {
-  let isTextChunkActive = false;
+function displayData(data, label) {
+  let isDataActive = false;
 
   const button = document.createElement('div');
   button.id = 'png-text-button';
   button.classList.add('metadata-preview-button');
-  button.textContent = "tEXt";
+  button.textContent = label;
   button.addEventListener('click', () => {
-    if (isTextChunkActive)
+    if (isDataActive)
       container.classList.remove('active');
     else
       container.classList.add('active');
-    isTextChunkActive = !isTextChunkActive;
+    isDataActive = !isDataActive;
   });
 
   const container = document.createElement('div');
   container.id = 'png-text-chunks';
-  for (chunkKey in chunks) {
-    const chunkElement = document.createElement('div');
-    chunkElement.classList.add('png-text-chunk');
-    chunkElement.innerHTML = `<span class="png-text-chunk-key">${chunkKey}:</span> <span class="png-text-chunk-value">${formatString(chunks[chunkKey])}</span>`;
-    container.appendChild(chunkElement);
-  }
-
-  document.getElementById('metadata-preview-buttons').appendChild(button);
-  document.body.appendChild(container);
-}
-
-function displayExif(exif) {
-  let isExifActive = false;
-
-  const button = document.createElement('div');
-  button.id = 'exif-button';
-  button.classList.add('metadata-preview-button');
-  button.textContent = "EXIF";
-  button.addEventListener('click', () => {
-    if (isExifActive)
-      container.classList.remove('active');
-    else
-      container.classList.add('active');
-    isExifActive = !isExifActive;
-  });
-
-  const container = document.createElement('div');
-  container.id = 'png-text-chunks';
-  for (exifKey in exif) {
-    const chunkElement = document.createElement('div');
-    chunkElement.classList.add('png-text-chunk');
-    chunkElement.innerHTML = `<span class="png-text-chunk-key">${exifKey}:</span> <span class="png-text-chunk-value">${formatString(exif[exifKey])}</span>`;
-    container.appendChild(chunkElement);
+  for (dataKey in data) {
+    const dataElement = document.createElement('div');
+    dataElement.classList.add('png-text-chunk');
+    dataElement.innerHTML = `<span class="png-text-chunk-key">${dataKey}:</span> <span class="png-text-chunk-value">${formatString(data[dataKey])}</span>`;
+    container.appendChild(dataElement);
   }
 
   document.getElementById('metadata-preview-buttons').appendChild(button);
@@ -171,11 +252,16 @@ function displayExif(exif) {
   if (url.endsWith(".jpg") || url.endsWith(".jpeg")) {
     const exif = await extractExifFromJpeg(document.location.href);
     hasData = Object.values(exif).length > 0;
-    if (hasData) displayExif(exif);
+    if (hasData) displayData(exif, 'EXIF');
   } else if (url.endsWith(".png")) {
     const chunks = await extractTEXTChunks(document.location.href);
     hasData = Object.values(chunks).length > 0;
-    if (hasData) displayChunks(chunks);
+    if (hasData) displayData(chunks, 'tEXt');
+    else {
+      const data = await novelAiRead(document.location.href);
+      hasData = Object.values(data).length > 0;
+      if (hasData) displayData(data, 'alpha');
+    }
   }
 
   if (!hasData) return;
