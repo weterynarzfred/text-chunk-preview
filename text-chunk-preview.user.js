@@ -4,7 +4,7 @@
 // @grant       none
 // @require     https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js
 // @require     https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js
-// @version     1.5
+// @version     1.5.1
 // @namespace   text-chunk-preview
 // @author      AntlersAnon
 // ==/UserScript==
@@ -259,7 +259,7 @@ function displayData(data, label) {
     if (hasData) displayData(chunks, 'tEXt');
     else {
       const data = await novelAiRead(document.location.href);
-      hasData = Object.values(data).length > 0;
+      hasData = data && Object.values(data).length > 0;
       if (hasData) displayData(data, 'alpha');
     }
   }
