@@ -4,7 +4,7 @@
   "main": "text-chunk-preview.user.js",
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "description": "",
   "scripts": {
     "watch": "webpack --watch"
@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "exif-js": "^2.3.0",
+    "jsonrepair": "^3.12.0",
     "pako": "^2.1.0"
   }
 }
