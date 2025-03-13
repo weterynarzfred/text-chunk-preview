@@ -1,0 +1,22 @@
+{
+  "name": "text-chunk-preview",
+  "version": "1.0.0",
+  "main": "text-chunk-preview.user.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "scripts": {
+    "watch": "webpack --watch"
+  },
+  "devDependencies": {
+    "@swc/core": "^1.11.9",
+    "swc-loader": "^0.2.6",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "exif-js": "^2.3.0",
+    "pako": "^2.1.0"
+  }
+}
