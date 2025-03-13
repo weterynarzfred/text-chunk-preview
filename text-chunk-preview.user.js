@@ -59,7 +59,7 @@ async function extractTEXTChunks(imgUrl) {
 }
 
 // adapted from https://github.com/albertlast/SD-Prompts-Checker
-function readBytes(alphaData, width, height, maxWidth, maxHeight) {
+function readBytes(alphaData, width, height, maxHeight) {
   let byte = 0;
   for (let i = 0; i < 8; i++) {
     byte <<= 1;
@@ -84,8 +84,6 @@ async function novelAiRead(imgUrl) {
   const byteArray = new Uint8Array(arrayBuffer);
   const contentType = response.headers.get("Content-Type");
 
-  let text = "",
-    textCompressionm = "";
   let aplhaData = {};
   let img = new Blob([byteArray], { type: contentType });
   let bitmap = await createImageBitmap(img);
@@ -113,7 +111,7 @@ async function novelAiRead(imgUrl) {
     }
   }
 
-  //magic number check
+  // magic number check
   const magic = "stealth_pngcomp";
   let readWidth = 0;
   let readHeight = 0;
@@ -134,10 +132,10 @@ async function novelAiRead(imgUrl) {
 
   if (magic !== magicCode) return;
 
-  //get the size of data
+  // get the size of data
   for (let y = 0; y < 4; y++) {
     const tempByte = pngByte;
-    readObj = readBytes(aplhaData, readWidth, readHeight, maxWidth, maxHeight);
+    readObj = readBytes(aplhaData, readWidth, readHeight, maxHeight);
     readWidth = readObj.width;
     readHeight = readObj.height;
     pngByte = new Uint8Array(pngByte.length + 1);
@@ -147,7 +145,7 @@ async function novelAiRead(imgUrl) {
 
   const zipLong = new DataView(pngByte.buffer).getInt32(0, false) / 8;
   pngByte = new Uint8Array();
-  //read data
+  // read data
   for (let y = 0; y < zipLong; y++) {
     const tempByte = pngByte;
     readObj = readBytes(aplhaData, readWidth, readHeight, maxWidth, maxHeight);
