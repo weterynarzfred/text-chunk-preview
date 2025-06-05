@@ -1,3 +1,5 @@
+import { TextDecoder } from 'util';
+
 function decodeUserComment(exif) {
   let userComment = exif?.userComment;
 
