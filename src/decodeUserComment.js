@@ -11,8 +11,10 @@ function decodeUserComment(exif) {
   switch (prefix) {
     case 'ASCII\0\0\0':
       userComment = String.fromCharCode(...data).replace(/\0/g, '').trim();
+      break;
     case 'UNICODE\0':
       userComment = new TextDecoder('utf-16be').decode(new Uint8Array(data)).replace(/\0/g, '').trim();
+      break;
     default:
       userComment = new TextDecoder('utf-8').decode(new Uint8Array(data)).replace(/\0/g, '').trim();
   }
