@@ -1,8 +1,8 @@
-import novelAiRead from "./novelAiRead";
-import extractExifFromJpeg from "./extractExifFromJpeg";
-import extractTextChunks from "./extractTextChunks";
-import displayData from "./displayData";
-import extractExifFromWebp from "./extractExifFromWebp";
+import novelAiRead from "./novelAiRead.js";
+import extractExifFromJpeg from "./extractExifFromJpeg.js";
+import extractTextChunks from "./extractTextChunks.js";
+import displayData from "./displayData.js";
+import extractExifFromWebp from "./extractExifFromWebp.js";
 
 (async () => {
   const url = document.location.href.split('?')[0].toLowerCase();

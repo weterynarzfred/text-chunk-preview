@@ -1,4 +1,4 @@
-import formatString from "./formatString";
+import formatString from "./formatString.js";
 
 function displayData(data, label) {
   let isDataActive = false;

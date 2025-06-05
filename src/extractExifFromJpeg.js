@@ -1,5 +1,5 @@
 import * as exifr from 'exifr';
-import decodeUserComment from "./decodeUserComment";
+import decodeUserComment from "./decodeUserComment.js";
 
 async function extractExifFromJpeg(imageResponse) {
   const blob = await imageResponse.blob();

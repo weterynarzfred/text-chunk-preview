@@ -1,5 +1,5 @@
 import * as exifr from 'exifr';
-import decodeUserComment from "./decodeUserComment";
+import decodeUserComment from "./decodeUserComment.js";
 
 function extractExifChunkFromWebp(arrayBuffer) {
   const dataView = new DataView(arrayBuffer);

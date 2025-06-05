@@ -1,7 +1,7 @@
 function decodeUserComment(exif) {
   let userComment = exif?.userComment;
 
-  if (!userComment instanceof Uint8Array || typeof userComment === 'string')
+  if (!(userComment instanceof Uint8Array))
     return exif;
 
   const prefixBytes = userComment.slice(0, 8);
@@ -17,6 +17,7 @@ function decodeUserComment(exif) {
       userComment = new TextDecoder('utf-8').decode(new Uint8Array(data)).replace(/\0/g, '').trim();
   }
 
+  console.log('changing userComment');
   delete exif.userComment;
   exif = { userComment, ...exif };
   return exif;
