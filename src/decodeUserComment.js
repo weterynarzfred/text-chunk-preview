@@ -19,7 +19,6 @@ function decodeUserComment(exif) {
       userComment = new TextDecoder('utf-8').decode(new Uint8Array(data)).replace(/\0/g, '').trim();
   }
 
-  console.log('changing userComment');
   delete exif.userComment;
   exif = { userComment, ...exif };
   return exif;

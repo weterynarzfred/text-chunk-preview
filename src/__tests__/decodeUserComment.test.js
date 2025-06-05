@@ -17,8 +17,14 @@ describe('decodeUserComment', () => {
     const prefix = new TextEncoder().encode('ASCII\0\0\0');
     const data = new TextEncoder().encode('Hello');
     const userComment = concatUint8Arrays(prefix, data);
-    const decoded = decodeUserComment(userComment);
-    expect(decoded).toBe('Hello');
+    const exif = {
+      test: 123,
+      userComment,
+    };
+
+    const decoded = decodeUserComment(exif);
+    expect(decoded.test).toBe(123);
+    expect(decoded.userComment).toBe('Hello');
   });
 
   test('decodes UNICODE user comment', () => {
@@ -30,12 +36,24 @@ describe('decodeUserComment', () => {
     }
     const data = new Uint8Array(buffer);
     const userComment = concatUint8Arrays(prefix, data);
-    const decoded = decodeUserComment(userComment);
-    expect(decoded).toBe('World');
+    const exif = {
+      test: 123,
+      userComment,
+    };
+
+    const decoded = decodeUserComment(exif);
+    expect(decoded.test).toBe(123);
+    expect(decoded.userComment).toBe('World');
   });
 
   test('does not change the string if userComment was a string', () => {
-    const decoded = decodeUserComment('Hello World');
-    expect(decoded).toBe('Hello World');
+    const exif = {
+      test: 123,
+      userComment: "Hello World",
+    };
+
+    const decoded = decodeUserComment(exif);
+    expect(decoded.test).toBe(123);
+    expect(decoded.userComment).toBe('Hello World');
   });
 });
