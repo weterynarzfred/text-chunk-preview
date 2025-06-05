@@ -1,3 +1,5 @@
+import { TextDecoder } from 'util';
+
 function decodeUserComment(userComment) {
   if (typeof userComment === 'string') return userComment;
 

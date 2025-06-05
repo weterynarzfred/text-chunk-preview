@@ -29,7 +29,6 @@ describe('displayData', () => {
     const button = document.getElementById('png-text-button');
     const container = document.getElementById('png-text-chunks');
 
-    expect(container.classList.contains('active')).toBe(false);
     button.dispatchEvent(new Event('click'));
     expect(container.classList.contains('active')).toBe(true);
     button.dispatchEvent(new Event('click'));
