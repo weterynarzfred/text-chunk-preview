@@ -2,6 +2,7 @@ import novelAiRead from "./novelAiRead";
 import extractExifFromJpeg from "./extractExifFromJpeg";
 import extractTextChunks from "./extractTextChunks";
 import displayData from "./displayData";
+import extractExifFromWebp from "./extractExifFromWebp";
 
 (async () => {
   const url = document.location.href.split('?')[0].toLowerCase();
@@ -12,6 +13,10 @@ import displayData from "./displayData";
   let hasData = false;
   if (url.endsWith(".jpg") || url.endsWith(".jpeg")) {
     const exif = await extractExifFromJpeg(document.location.href);
+    hasData = Object.values(exif).length > 0;
+    if (hasData) displayData(exif, 'EXIF');
+  } else if (url.endsWith(".webp")) {
+    const exif = await extractExifFromWebp(document.location.href);
     hasData = Object.values(exif).length > 0;
     if (hasData) displayData(exif, 'EXIF');
   } else if (url.endsWith(".png")) {

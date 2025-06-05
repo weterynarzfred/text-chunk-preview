@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        tEXt chunk preview
-// @include     /.*\.(png|jpe?g)(\?.*)?$/
+// @include     /.*\.(png|jpe?g|webp)(\?.*)?$/
 // @grant       none
 // @version     1.7
 // @namespace   text-chunk-preview
