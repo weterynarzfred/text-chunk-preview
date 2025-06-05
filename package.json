@@ -6,6 +6,7 @@
   "author": "",
   "license": "MIT",
   "description": "",
+  "type": "module",
   "scripts": {
     "watch": "webpack --watch",
     "test": "jest"

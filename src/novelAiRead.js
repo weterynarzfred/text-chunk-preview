@@ -22,13 +22,12 @@ function readBytes(alphaData, width, height, maxHeight) {
   };
 }
 
-async function novelAiRead(imgUrl) {
-  const response = await fetch(imgUrl);
-  const arrayBuffer = await response.arrayBuffer();
+async function novelAiRead(imageResponse) {
+  const arrayBuffer = await imageResponse.arrayBuffer();
   const byteArray = new Uint8Array(arrayBuffer);
-  const contentType = response.headers.get("Content-Type");
+  const contentType = imageResponse.headers.get("Content-Type");
 
-  let aplhaData = {};
+  let alphaData = {};
   let img = new Blob([byteArray], { type: contentType });
   let bitmap = await createImageBitmap(img);
   let canvas = document.createElement("canvas");
@@ -46,8 +45,8 @@ async function novelAiRead(imgUrl) {
   let cols = 0;
 
   for (let x = 3; x < imgData.length; x += 4) {
-    if (cols === 0) aplhaData[rows] = {};
-    aplhaData[rows][cols] = imgData[x] & 1;
+    if (cols === 0) alphaData[rows] = {};
+    alphaData[rows][cols] = imgData[x] & 1;
     cols++;
     if (cols === maxWidth) {
       rows++;
@@ -63,7 +62,7 @@ async function novelAiRead(imgUrl) {
   let pngByte = new Uint8Array();
   for (let y = 0; y < magic.length; y++) {
     const tempByte = pngByte;
-    readObj = readBytes(aplhaData, readWidth, readHeight, maxWidth, maxHeight);
+    readObj = readBytes(alphaData, readWidth, readHeight, maxWidth, maxHeight);
     readWidth = readObj.width;
     readHeight = readObj.height;
     pngByte = new Uint8Array(pngByte.length + 1);
@@ -79,7 +78,7 @@ async function novelAiRead(imgUrl) {
   // get the size of data
   for (let y = 0; y < 4; y++) {
     const tempByte = pngByte;
-    readObj = readBytes(aplhaData, readWidth, readHeight, maxHeight);
+    readObj = readBytes(alphaData, readWidth, readHeight, maxHeight);
     readWidth = readObj.width;
     readHeight = readObj.height;
     pngByte = new Uint8Array(pngByte.length + 1);
@@ -92,7 +91,7 @@ async function novelAiRead(imgUrl) {
   // read data
   for (let y = 0; y < zipLong; y++) {
     const tempByte = pngByte;
-    readObj = readBytes(aplhaData, readWidth, readHeight, maxWidth, maxHeight);
+    readObj = readBytes(alphaData, readWidth, readHeight, maxWidth, maxHeight);
     readWidth = readObj.width;
     readHeight = readObj.height;
     pngByte = new Uint8Array(pngByte.length + 1);

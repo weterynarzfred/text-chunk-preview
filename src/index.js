@@ -1,8 +1,8 @@
-import novelAiRead from "./novelAiRead";
-import extractExifFromJpeg from "./extractExifFromJpeg";
-import extractTextChunks from "./extractTextChunks";
-import displayData from "./displayData";
-import extractExifFromWebp from "./extractExifFromWebp";
+import novelAiRead from "./novelAiRead.js";
+import extractExifFromJpeg from "./extractExifFromJpeg.js";
+import extractTextChunks from "./extractTextChunks.js";
+import displayData from "./displayData.js";
+import extractExifFromWebp from "./extractExifFromWebp.js";
 
 (async () => {
   const url = document.location.href.split('?')[0].toLowerCase();
@@ -11,23 +11,28 @@ import extractExifFromWebp from "./extractExifFromWebp";
   document.body.appendChild(buttons);
 
   let hasData = false;
-  if (url.endsWith(".jpg") || url.endsWith(".jpeg")) {
-    const exif = await extractExifFromJpeg(document.location.href);
-    hasData = Object.values(exif).length > 0;
-    if (hasData) displayData(exif, 'EXIF');
-  } else if (url.endsWith(".webp")) {
-    const exif = await extractExifFromWebp(document.location.href);
-    hasData = Object.values(exif).length > 0;
-    if (hasData) displayData(exif, 'EXIF');
-  } else if (url.endsWith(".png")) {
-    const chunks = await extractTextChunks(document.location.href);
-    hasData = Object.values(chunks).length > 0;
-    if (hasData) displayData(chunks, 'tEXt');
-    else {
-      const data = await novelAiRead(document.location.href);
-      hasData = data && Object.values(data).length > 0;
-      if (hasData) displayData(data, 'alpha');
+  try {
+    const imageResponse = await fetch(document.location.href);
+    if (url.endsWith(".jpg") || url.endsWith(".jpeg")) {
+      const exif = await extractExifFromJpeg(imageResponse);
+      hasData = Object.values(exif).length > 0;
+      if (hasData) displayData(exif, 'EXIF');
+    } else if (url.endsWith(".webp")) {
+      const exif = await extractExifFromWebp(imageResponse);
+      hasData = Object.values(exif).length > 0;
+      if (hasData) displayData(exif, 'EXIF');
+    } else if (url.endsWith(".png")) {
+      const chunks = await extractTextChunks(imageResponse);
+      hasData = Object.values(chunks).length > 0;
+      if (hasData) displayData(chunks, 'tEXt');
+      else {
+        const data = await novelAiRead(imageResponse);
+        hasData = data && Object.values(data).length > 0;
+        if (hasData) displayData(data, 'alpha');
+      }
     }
+  } catch (e) {
+    console.warn(`Couldn't fetch the image`, e.message);
   }
 
   if (!hasData) return;

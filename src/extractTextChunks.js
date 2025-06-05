@@ -1,8 +1,7 @@
 import pako from 'pako';
 
-async function extractTextChunks(imgUrl) {
-  const response = await fetch(imgUrl);
-  const arrayBuffer = await response.arrayBuffer();
+async function extractTextChunks(imageResponse) {
+  const arrayBuffer = await imageResponse.arrayBuffer();
   const dataView = new DataView(arrayBuffer);
 
   let position = 8; // Skip PNG signature

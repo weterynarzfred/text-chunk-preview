@@ -1,7 +1,7 @@
 import * as exifr from 'exifr';
-import decodeUserComment from "./decodeUserComment";
+import decodeUserComment from "./decodeUserComment.js";
 
-function extractExifChunkFromWebP(arrayBuffer) {
+function extractExifChunkFromWebp(arrayBuffer) {
   const dataView = new DataView(arrayBuffer);
   const length = dataView.byteLength;
 
@@ -39,25 +39,17 @@ function extractExifChunkFromWebP(arrayBuffer) {
   return null;
 }
 
-async function extractExifFromWebp(imgUrl) {
-  const response = await fetch(imgUrl);
-  const blob = await response.blob();
-  const arrayBuffer = await blob.arrayBuffer();
+async function extractExifFromWebp(imageResponse) {
+  const arrayBuffer = await imageResponse.arrayBuffer();
 
   let exif;
   try {
-    const exifChunk = extractExifChunkFromWebP(arrayBuffer);
+    const exifChunk = extractExifChunkFromWebp(arrayBuffer);
     exif = await exifr.parse(exifChunk, { userComment: true });
   } catch (e) { }
   if (!exif) return {};
 
-  if (exif?.userComment instanceof Uint8Array) {
-    const decoded = decodeUserComment(exif.userComment);
-    delete exif.userComment;
-    exif = { UserComment: decoded, ...exif };
-  }
-
-  return exif;
+  return decodeUserComment(exif);
 }
 
 export default extractExifFromWebp;
