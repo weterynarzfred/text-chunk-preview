@@ -2,7 +2,7 @@
 // @name        tEXt chunk preview
 // @include     /.*\.(png|jpe?g|webp)(\?.*)?$/
 // @grant       none
-// @version     1.7
+// @version     1.8
 // @namespace   text-chunk-preview
 // @author      AntlersAnon
 // ==/UserScript==
